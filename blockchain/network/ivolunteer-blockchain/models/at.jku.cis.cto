@@ -1,0 +1,50 @@
+/**
+ *  model definitions
+ */
+
+namespace at.jku.cis
+
+participant Marketplace identified by id {
+  o String id
+}
+
+asset publishedTask identified by hash {
+  o String hash
+  o DateTime timestamp
+  o String taskId
+  o String marketplaceId
+}
+
+asset taskInteraction identified by hash {
+  o String hash
+  o DateTime timestamp
+  o String taskId
+  o String marketplaceId
+  o String taskInteractionType
+}
+
+asset finishedTask identified by hash {
+  o String hash
+  o DateTime timestamp
+  o String taskId
+  o String marketplaceId
+  o String volunteerId
+}
+
+asset competence identified by hash {
+  o String hash
+  o DateTime timestamp
+  o String competenceId
+  o String marketplaceId
+  o String volunteerId
+}
+
+asset verificationObject identified by hash {
+ o String hash
+ o String volunteerId
+}
+
+
+transaction StoreVerificationObjects {
+  o verificationObject[] verificationObjects
+}

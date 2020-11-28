@@ -1,0 +1,36 @@
+#!/bin/bash
+
+echo "INIT START"
+docker rm -f composer-rest-server
+
+~/fabric-dev-servers/stopFabric.sh
+~/fabric-dev-servers/teardownFabric.sh
+
+rm -fr $HOME/.composer
+
+rm *.card
+rm *.bna
+
+docker rmi -f $(docker images |grep 'dev-peer0.org1.example.com-ivolunteer-blockchain')
+
+# Starting the Fabric
+~/fabric-dev-servers/downloadFabric.sh
+~/fabric-dev-servers/startFabric.sh
+~/fabric-dev-servers/createPeerAdminCard.sh
+
+# Deploying the business network
+composer archive create -t dir -n .
+composer network install --card PeerAdmin@hlfv1 --archiveFile ivolunteer-blockchain@0.0.1.bna
+composer network start --networkName ivolunteer-blockchain --networkVersion 0.0.1 --networkAdmin admin --networkAdminEnrollSecret adminpw --card PeerAdmin@hlfv1 --file networkadmin.card
+composer card import --file networkadmin.card
+
+# Creating seperate user for REST server
+composer participant add -c admin@ivolunteer-blockchain -d '{"$class":"org.hyperledger.composer.system.NetworkAdmin", "participantId":"restadmin"}'
+composer identity issue -c admin@ivolunteer-blockchain -f restadmin.card -u restadmin -a "resource:org.hyperledger.composer.system.NetworkAdmin#restadmin"
+composer card import -f restadmin.card
+
+# Updating restadmin's connection.json, since REST server is running in docker container
+cd $HOME
+sed -e 's/localhost:7051/172.17.0.1:7051/' -e 's/localhost:7053/172.17.0.1:7053/' -e 's/localhost:7054/172.17.0.1:7054/'  -e 's/localhost:7050/172.17.0.1:7050/'  < $HOME/.composer/cards/restadmin@ivolunteer-blockchain/connection.json  > /tmp/connection.json && cp -p /tmp/connection.json $HOME/.composer/cards/restadmin@ivolunteer-blockchain/ 
+
+
